@@ -7,18 +7,18 @@
     <div class="three-column-grid">
         {% for bike in bikes %}
             <div class="bike-card">
-                <h3>{{ bike.Name }}</h3>
+                <h3>{{ bike.Model }}</h3>
                 <p><strong>Maker:</strong> {{ bike.Maker }}</p>
                 <p><strong>Model:</strong> {{ bike.Model }}</p>
                 <a href="{{ url_for('bike', id=bike.BikeID) }}">
-                    <img src="{{ bike.ImageURL }}" alt="{{ bike.Name }}" width="200">
+                    <img src="{{ url_for('static', filename='images/' + bike.ImageURL) }}" alt="{{ bike.Model }}" width="200">
                 </a>
             </div>
         {% endfor %}
     </div>
     <ul>
         {% for bike in bikes %}
-            <li>{{ bike.Name }} by {{ bike.Maker }}</li>
+            <li>{{ bike.Model }} by {{ bike.Maker }}</li>
         {% endfor %}
     </ul>
 {% endblock %}
