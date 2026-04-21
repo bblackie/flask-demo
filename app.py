@@ -1,75 +1,53 @@
 # app.py
-'''
-Import at the top of the file to avoid circular imports
-'''
-from flask import Flask
+from flask import Flask, g, render_template
 import sqlite3
-from flask import g
 
 DATABASE = 'database.db'
 
 app = Flask(__name__)
 
-'''Function to get a database connection. This function will be called whenever we need to interact with the database.'''
+
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
     return db
 
-
-'''Get the home route to display all the bikes in the database.'''
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
 
-
-'''Function to query the database and return the results.'''
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
-'''Home route to display all the bikes in the database.'''
-@app.route("/")
+@app.route('/')
 def home():
-    
-    sql = '''
-        SELECT Makers.Name AS Maker, Bikes.Model, Bikes.Cost, Bikes.Description
-        FROM Bikes
-        JOIN Makers
-        ON Bikes.MakerID = Makers.MakerID;
-        '''
+    #home page- just the ID, Maker, Model and Image URL
+    sql = """
+    SELECT Bikes.BikeID, Makers.Name, Bikes.Model, Bikes.ImageURL 
+    FROM Bikes
+    JOIN Makers ON Makers.MakerID = Bikes.MakerID;
+    """
     results = query_db(sql)
-    return str(results)
+    return render_template('home.html', title='Home', bikes=results)
+
+@app.route("/bike/<int:id>")
+def bike(id):
+    #just one bike based on the id
+    sql = """
+    SELECT * FROM Bikes
+    JOIN Makers ON Makers.MakerID = Bikes.MakerID 
+    WHERE Bikes.BikeID = ?;
+    """
+    result = query_db(sql, (id,), True)
+    return render_template('bike.html', title='Bike Details', bike=result)
 
 
-@app.route("/bikes")
-def bikes():
-    sql = '''
-        SELECT BikeID, Model
-        FROM Bikes;
-        '''
-    results = query_db(sql)
-    return str(results)
 
-
-@app.route("/bikes/<int:bike_id>")
-def bike(bike_id):
-    sql = '''
-        SELECT Makers.Name AS Maker, Bikes.Model, Bikes.Cost, Bikes.Description
-        FROM Bikes
-        JOIN Makers
-        ON Bikes.MakerID = Makers.MakerID
-        WHERE Bikes.BikeID = ?;
-        '''
-    result = query_db(sql, (bike_id,), one=True)
-    return str(result) if result else ("Bike not found", 404)
-
-
-'''Run the Flask app.'''
 if __name__ == "__main__":
     app.run(debug=True)

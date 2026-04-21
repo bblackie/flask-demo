@@ -1,0 +1,9 @@
+<!-- Bike Details Page Content -->
+{% extends "layout.html" %}
+
+{% block body %}
+    <h2>{{ bike.Name }}</h2>
+    <p><strong>Maker:</strong> {{ bike.Maker }}</p>
+    <p><strong>Model:</strong> {{ bike.Model }}</p>
+    <img src="{{ bike.ImageURL }}" alt="{{ bike.Name }}" width="300">
+{% endblock %}
