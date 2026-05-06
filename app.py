@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, g, render_template
+from flask import Flask, g, render_template, request
 import sqlite3
 
 DATABASE = 'database.db'
@@ -37,17 +37,6 @@ def home():
     results = query_db(sql)
     return render_template('home.html', title='Home', bikes=results)
 
-@app.route('/search')
-def search():
-    # basic search page data source (same catalog list for now)
-    sql = """
-    SELECT Bikes.BikeID, Makers.Name AS Maker, Bikes.Model, Bikes.ImageURL 
-    FROM Bikes
-    JOIN Makers ON Makers.MakerID = Bikes.MakerID;
-    """
-    results = query_db(sql)
-    return render_template('search.html', title='Bike Search', bikes=results)
-
 @app.route("/bike/<int:id>")
 def bike(id):
     #just one bike based on the id
@@ -59,6 +48,43 @@ def bike(id):
     """
     result = query_db(sql, (id,), True)
     return render_template('bike.html', title='Bike Details', bike=result)
+
+@app.route('/search')
+def search():
+        # Get all makers to populate the dropdown
+    makers = query_db('SELECT MakerID, name FROM makers ORDER BY name')
+
+    # Read filter values from the URL query string
+    maker_id = request.args.get('maker_id', '')
+    search   = request.args.get('search', '')
+
+    # Build the WHERE clause dynamically based on what filters are active
+    conditions = []
+    args = []
+
+    if maker_id:
+        conditions.append('bikes.MakerID = ?')
+        args.append(maker_id)
+
+    if search:
+        conditions.append('bikes.model LIKE ?')
+        args.append(f'%{search}%')
+
+    where_clause = ('WHERE ' + ' AND '.join(conditions)) if conditions else ''
+
+    sql = f"""
+        SELECT bikes.BikeID, makers.name, bikes.model, bikes.ImageURL
+        FROM bikes
+        JOIN makers ON bikes.MakerID = makers.MakerID
+        {where_clause}
+    """
+    results = query_db(sql, tuple(args))
+
+    return render_template('search.html', 
+                           results=results,
+                           makers=makers,
+                           selected_maker=maker_id,
+                           search=search)
 
 
 

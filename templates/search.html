@@ -3,10 +3,46 @@
 {% extends "layout.html" %}
 
 {% block body %}
-    <h2>Available Bikes</h2>
-    <ul>
-        {% for bike in bikes %}
-            <li>{{ bike.Model }} by {{ bike.Maker }}</li>
+<!-- Filter bar -->
+<form method="get" action="/search" class="filter-bar">
+
+    <select name="maker_id" onchange="this.form.submit()">
+        <option value="">All Makers</option>
+        {% for maker in makers %}
+        <option value="{{ maker[0] }}"
+            {% if selected_maker == maker[0]|string %}selected{% endif %}>
+            {{ maker[1] }}
+        </option>
         {% endfor %}
-    </ul>
+    </select>
+
+    <input type="text"
+           name="search"
+           placeholder="Search models..."
+           value="{{ search }}">
+
+    <button type="submit">Search</button>
+
+    {% if selected_maker or search %}
+    <a href="/search" class="clear-link">Clear filters</a>
+    {% endif %}
+
+</form>
+
+<!-- Results grid -->
+<div class="three-column">
+    {% for bike in results %}
+    <a href="{{ url_for('bike', id=bike[0]) }}">
+        <div class="w3-card-4">
+            <h3>{{ bike[1] }} {{ bike[2] }}</h3>
+            <img src="{{ url_for('static', filename='images/' + bike.ImageURL) }}" alt="{{ bike.Model }}" width="200">
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% if not results %}
+<p class="no-results">No results found. <a href="/">Clear filters</a></p>
+{% endif %}
+
 {% endblock %}
